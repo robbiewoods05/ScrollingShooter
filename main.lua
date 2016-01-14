@@ -1,14 +1,9 @@
-function CheckCollision(x1,y1,w1,h1, x2,y2,w2,h2)
-  return x1 < x2+w2 and
-         x2 < x1+w1 and
-         y1 < y2+h2 and
-         y2 < y1+h1
-end
-
 debug = true
 isAlive = true
 
 score = 0
+
+lives = 3
 
 canShoot = true
 canShootTimerMax = 0.2
@@ -23,17 +18,50 @@ enemies = {}
 bulletImage = nil
 bullets = {}
 
-player = { x = 100, y = 100, speed = 150, img = nil }
+player = { x = 100, y = 100, speed = 500, img = nil, damage = 5}
+focus = true
+
+background = nil
+
+laserSound = nil
+explosionSound = nil
+backgroundMusic = nil
+
+function CheckCollision(x1,y1,w1,h1, x2,y2,w2,h2)
+  return x1 < x2+w2 and
+         x2 < x1+w1 and
+         y1 < y2+h2 and
+         y2 < y1+h1
+end
+
+function Restart()
+    score = 0
+    enemies = {}
+    bullets = {}
+    lives = 3
+    player.x = 100
+    player.y = 100
+    isAlive = true
+end
 
 function love.load(arg)
-  player.img = love.graphics.newImage('assets/aircraft.png')
+  player.img = love.graphics.newImage('assets/ship.png')
   bulletImage = love.graphics.newImage('assets/bullet.png')
   enemyImage = love.graphics.newImage('assets/enemy.png')
+  background = love.graphics.newImage('assets/stars.png')
+  laserSound = love.audio.newSource('assets/laser.wav', 'stream')
+  explosionSound = love.audio.newSource('assets/explosion.wav', 'stream')
+  backgroundMusic = love.audio.newSource('assets/bgmusic.ogg', 'stream')
 end
 
 function love.update(dt)
+    love.audio.play(backgroundMusic)
   if love.keyboard.isDown('escape') then
     love.event.push('quit')
+  end
+
+  if not isAlive and love.keyboard.isDown('r') then
+      Restart();
   end
 
   --Movement
@@ -53,7 +81,8 @@ function love.update(dt)
   end
 
   --Shooting
-  if love.keyboard.isDown('space', 'lctrl', 'rctrl') and canShoot then
+  if love.keyboard.isDown('space', 'lctrl', 'rctrl') and canShoot and isAlive then
+    love.audio.play(laserSound)
     newBullet = { x = player.x  + (player.img:getWidth() / 2), y = player.y, img = bulletImage }
     table.insert(bullets, newBullet)
     canShoot = false
@@ -91,25 +120,38 @@ function love.update(dt)
       if CheckCollision(enemy.x, enemy.y, enemy.img:getWidth(), enemy.img:getHeight(), bullet.x, bullet.y, bullet.img:getWidth(), bullet.img:getHeight()) then
         table.remove(bullets, j)
         table.remove(enemies, i)
+        love.audio.play(explosionSound)
         score = score + 10
       end
     end
 
     if CheckCollision(enemy.x, enemy.y, enemy.img:getWidth(), enemy.img:getHeight(), player.x, player.y, player.img:getWidth(), player.img:getHeight()) and isAlive then
       table.remove(enemies, i)
-      isAlive = false;
+      lives = lives - 1
+      if lives == 0 then
+          love.audio.play(explosionSound)
+          isAlive = false
+      end
     end
   end
-end
 
 function love.draw()
-  love.graphics.draw(player.img, player.x, player.y)
+    love.graphics.draw(background, 0, 0)
+    if isAlive then
+        love.graphics.print("Score: " .. score)
+        love.graphics.print("Lives remaining: " .. lives, love.graphics.getWidth() - 120, 0)
 
-  for i, bullet in ipairs(bullets) do
-    love.graphics.draw(bullet.img, bullet.x, bullet.y)
-  end
+        love.graphics.draw(player.img, player.x, player.y)
 
-  for i, enemy in ipairs(enemies) do
-    love.graphics.draw(enemy.img, enemy.x, enemy.y)
-  end
+        for i, bullet in ipairs(bullets) do
+            love.graphics.draw(bullet.img, bullet.x, bullet.y)
+        end
+
+        for i, enemy in ipairs(enemies) do
+            love.graphics.draw(enemy.img, enemy.x, enemy.y)
+        end
+    else
+        love.graphics.printf("You are dead. Press R to restart.", 170, (love.graphics.getHeight()/2), 500, "center")
+    end
+end
 end
