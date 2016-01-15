@@ -112,9 +112,7 @@ function love.draw()
         Enemies:Draw()
 
     else
-      for i=1,15 do
-        Animation:PlayAnimation(explosionAnimation, Player.x, Player.y, explosionSpritesheet, i)
-      end
+        Animation:PlayAnimation(explosionAnimation, Player.x, Player.y, explosionSpritesheet)
         love.graphics.printf("You are dead. Press R to restart.", 170, (love.graphics.getHeight()/2), 500, "center")
     end
 end
