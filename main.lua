@@ -3,9 +3,12 @@ debug = true
 Player = require "src/player"
 Enemies = require "src/enemies"
 Bullets = require "src/bullets"
+Animation = require "src/Animation"
 
 background = nil
 backgroundMusic = nil
+
+local explosionAnimation = nil
 
 function CheckCollision(x1, y1, w1, h1, x2, y2, w2, h2)
   return x1 < x2 + w2 and
@@ -19,8 +22,11 @@ function love.load(arg)
   Enemies:Initialise()
   Bullets:Initialise()
 
+  explosionSpritesheet = love.graphics.newImage('assets/explosion.png')
   background = love.graphics.newImage('assets/stars.png')
   backgroundMusic = love.audio.newSource('assets/bgmusic.ogg', 'stream')
+
+  explosionAnimation = Animation:CreateQuads(96, 96, 3, 5, explosionSpritesheet)
 end
 
 function love.update(dt)
@@ -106,6 +112,9 @@ function love.draw()
         Enemies:Draw()
 
     else
+      for i=1,15 do
+        Animation:PlayAnimation(explosionAnimation, Player.x, Player.y, explosionSpritesheet, i)
+      end
         love.graphics.printf("You are dead. Press R to restart.", 170, (love.graphics.getHeight()/2), 500, "center")
     end
 end
