@@ -2,17 +2,9 @@ debug = true
 
 Player = require "player"
 Enemies = require "enemies"
-
-canShoot = true
-canShootTimerMax = 0.2
-canShootTimer = canShootTimerMax
-
-bulletImage = nil
-bullets = {}
+Bullets = require "bullets"
 
 background = nil
-
-explosionSound = nil
 backgroundMusic = nil
 
 function CheckCollision(x1, y1, w1, h1, x2, y2, w2, h2)
@@ -22,14 +14,12 @@ function CheckCollision(x1, y1, w1, h1, x2, y2, w2, h2)
          y2 < y1 + h1
 end
 
-
 function love.load(arg)
   Player:Initialise()
   Enemies:Initialise()
+  Bullets:Initialise()
 
-  bulletImage = love.graphics.newImage('assets/bullet.png')
   background = love.graphics.newImage('assets/stars.png')
-
   backgroundMusic = love.audio.newSource('assets/bgmusic.ogg', 'stream')
 end
 
@@ -54,48 +44,42 @@ function love.update(dt)
     Player:Move("down", dt)
   end
 
-  canShootTimer = canShootTimer - (1 * dt)
-  if canShootTimer < 0 then
-    canShoot = true
+  Player.canShootTimer = Player.canShootTimer - (1 * dt)
+  if Player.canShootTimer < 0 then
+    Player.canShoot = true
   end
 
   --Shooting
-  if love.keyboard.isDown('space', 'lctrl', 'rctrl') and canShoot and Player.isAlive then
+  if love.keyboard.isDown('space', 'lctrl', 'rctrl') and Player.canShoot and Player.isAlive then
     love.audio.play(Player.shootSound)
-    newBullet = { x = Player.x  + (Player.img:getWidth() / 2), y = Player.y, img = bulletImage }
-    table.insert(bullets, newBullet)
-    canShoot = false
-    canShootTimer = canShootTimerMax
+    Bullets:Create()
+    Player.canShoot = false
+    Player.canShootTimer = Player.canShootTimerMax
   end
 
-  for i, bullet in ipairs(bullets) do
-    bullet.y = bullet.y - (250 * dt)
-
-    if bullet.y < 0 then
-      table.remove(bullets, i)
-    end
-  end
+  Player:Fire(dt)
 
   Enemies:Create(dt)
-
+  Enemies:Move(dt)
 
   -- Check for collision between enemy and bullet
   for i, enemy in ipairs(Enemies.enemies) do
-    for j, bullet in ipairs(bullets) do
-      if CheckCollision(enemy.x, enemy.y, enemy.img:getWidth(), enemy.img:getHeight(), bullet.x, bullet.y, bullet.img:getWidth(), bullet.img:getHeight()) then
-        table.remove(bullets, j)
+    for j, bullet in ipairs(Bullets.bullets) do
+      if CheckCollision(enemy.x, enemy.y, Enemies.img:getWidth(), Enemies.img:getHeight(), bullet.x, bullet.y, Bullets.img:getWidth(), Bullets.img:getHeight()) then
+        table.remove(Bullets.bullets, j)
         table.remove(Enemies.enemies, i)
         love.audio.play(Enemies.deathSound)
         Player.score = Player.score + 10
       end
     end
 
+    -- Check for collision between enemy and player
     if CheckCollision(enemy.x, enemy.y, enemy.img:getWidth(), enemy.img:getHeight(), Player.x, Player.y, Player.img:getWidth(), Player.img:getHeight()) and Player.isAlive then
       table.remove(Enemies.enemies, i)
       Player.health = Player.health - 10
       love.audio.play(Enemies.deathSound)
       if Player.health == 0 then
-          Player.isAlive = false
+          Player:Die()
       end
     end
   end
@@ -109,7 +93,7 @@ function love.draw()
         --Debug
         love.graphics.print("FPS: " .. love.timer.getFPS(), 0, 400)
         love.graphics.print("Delta Time: " .. string.format("%4.3f", love.timer.getDelta()), 0 , 412)
-        love.graphics.print("Enemies: " .. #enemies, 0, 427)
+        love.graphics.print("Enemies: " .. #Enemies.enemies, 0, 427)
         love.graphics.print("Up: " ..  tostring(love.keyboard.isDown("w", "up")), 0, 442)
         love.graphics.print("Down: " .. tostring(love.keyboard.isDown("s", "down")), 0, 457)
         love.graphics.print("Left: " .. tostring(love.keyboard.isDown("a", "left")), 0, 472)
@@ -117,9 +101,7 @@ function love.draw()
 
         love.graphics.draw(Player.img, Player.x, Player.y)
 
-        for i, bullet in ipairs(bullets) do
-            love.graphics.draw(bullet.img, bullet.x, bullet.y)
-        end
+        Bullets:Draw()
 
         Enemies:Draw()
 

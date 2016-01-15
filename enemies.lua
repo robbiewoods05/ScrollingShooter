@@ -30,9 +30,15 @@ function Enemies:Move(dt)
 end
 
 function Enemies:Draw()
-  for i, enemy in ipairs(enemies) do
+  for i, enemy in ipairs(Enemies.enemies) do
       love.graphics.draw(enemy.img, enemy.x, enemy.y)
   end
+end
+
+function Enemies:Die()
+  table.remove(Bullets.bullets, j)
+  table.remove(Enemies.enemies, i)
+  love.audio.play(Enemies.deathSound)
 end
 
 return Enemies
