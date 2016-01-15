@@ -1,8 +1,8 @@
 debug = true
 
-Player = require "player"
-Enemies = require "enemies"
-Bullets = require "bullets"
+Player = require "src/player"
+Enemies = require "src/enemies"
+Bullets = require "src/bullets"
 
 background = nil
 backgroundMusic = nil
