@@ -1,56 +1,35 @@
 debug = true
-isAlive = true
 
-score = 0
-
-lives = 3
+Player = require "player"
+Enemies = require "enemies"
 
 canShoot = true
 canShootTimerMax = 0.2
 canShootTimer = canShootTimerMax
 
-createEnemyTimerMax = 0.9
-createEnemyTimer = createEnemyTimerMax
-
-enemyImage = nil
-enemies = {}
-
 bulletImage = nil
 bullets = {}
 
-player = { x = 100, y = 100, speed = 500, img = nil, damage = 5}
-focus = true
-
 background = nil
 
-laserSound = nil
 explosionSound = nil
 backgroundMusic = nil
 
-function CheckCollision(x1,y1,w1,h1, x2,y2,w2,h2)
-  return x1 < x2+w2 and
-         x2 < x1+w1 and
-         y1 < y2+h2 and
-         y2 < y1+h1
+function CheckCollision(x1, y1, w1, h1, x2, y2, w2, h2)
+  return x1 < x2 + w2 and
+         x2 < x1 + w1 and
+         y1 < y2 + h2 and
+         y2 < y1 + h1
 end
 
-function Restart()
-    score = 0
-    enemies = {}
-    bullets = {}
-    lives = 3
-    player.x = 100
-    player.y = 100
-    isAlive = true
-end
 
 function love.load(arg)
-  player.img = love.graphics.newImage('assets/ship.png')
+  Player:Initialise()
+  Enemies:Initialise()
+
   bulletImage = love.graphics.newImage('assets/bullet.png')
-  enemyImage = love.graphics.newImage('assets/enemy.png')
   background = love.graphics.newImage('assets/stars.png')
-  laserSound = love.audio.newSource('assets/laser.wav', 'stream')
-  explosionSound = love.audio.newSource('assets/explosion.wav', 'stream')
+
   backgroundMusic = love.audio.newSource('assets/bgmusic.ogg', 'stream')
 end
 
@@ -61,18 +40,18 @@ function love.update(dt)
   end
 
   if not isAlive and love.keyboard.isDown('r') then
-      Restart();
+      Player:Initialise()
   end
 
   --Movement
-  if love.keyboard.isDown('left', 'a') and player.x > 0 then
-    player.x = player.x - (player.speed * dt)
-  elseif love.keyboard.isDown('right', 'd') and player.x  < love.graphics.getWidth() - player.img:getWidth() then
-    player.x = player.x + (player.speed * dt)
-  elseif love.keyboard.isDown('up', 'w') and player.y > 0 then
-    player.y = player.y - (player.speed * dt)
-  elseif love.keyboard.isDown('down', 's') and player.y < love.graphics.getHeight() - player.img:getHeight() then
-    player.y = player.y + (player.speed * dt)
+  if love.keyboard.isDown('left', 'a') and Player.x > 0 then
+    Player:Move("left", dt)
+  elseif love.keyboard.isDown('right', 'd') and Player.x  < love.graphics.getWidth() - Player.img:getWidth() then
+    Player:Move("right", dt)
+  elseif love.keyboard.isDown('up', 'w') and Player.y > 0 then
+    Player:Move("up", dt)
+  elseif love.keyboard.isDown('down', 's') and Player.y < love.graphics.getHeight() - Player.img:getHeight() then
+    Player:Move("down", dt)
   end
 
   canShootTimer = canShootTimer - (1 * dt)
@@ -81,9 +60,9 @@ function love.update(dt)
   end
 
   --Shooting
-  if love.keyboard.isDown('space', 'lctrl', 'rctrl') and canShoot and isAlive then
-    love.audio.play(laserSound)
-    newBullet = { x = player.x  + (player.img:getWidth() / 2), y = player.y, img = bulletImage }
+  if love.keyboard.isDown('space', 'lctrl', 'rctrl') and canShoot and Player.isAlive then
+    love.audio.play(Player.shootSound)
+    newBullet = { x = Player.x  + (Player.img:getWidth() / 2), y = Player.y, img = bulletImage }
     table.insert(bullets, newBullet)
     canShoot = false
     canShootTimer = canShootTimerMax
@@ -97,59 +76,53 @@ function love.update(dt)
     end
   end
 
-  createEnemyTimer = createEnemyTimer - (1 * dt)
+  Enemies:Create(dt)
 
-  if createEnemyTimer < 0 then
-    createEnemyTimer = createEnemyTimerMax
 
-    randomNumber = love.math.random(10, love.graphics.getWidth() - 10)
-    newEnemy = { x = randomNumber, y = -10, img = enemyImage }
-    table.insert(enemies, newEnemy)
-  end
-
-  for i, enemy in ipairs(enemies) do
-    enemy.y = enemy.y + (140 * dt)
-
-    if enemy.y > 650 then
-      table.remove(enemies, i)
-    end
-  end
-
-  for i, enemy in ipairs(enemies) do
+  -- Check for collision between enemy and bullet
+  for i, enemy in ipairs(Enemies.enemies) do
     for j, bullet in ipairs(bullets) do
       if CheckCollision(enemy.x, enemy.y, enemy.img:getWidth(), enemy.img:getHeight(), bullet.x, bullet.y, bullet.img:getWidth(), bullet.img:getHeight()) then
         table.remove(bullets, j)
-        table.remove(enemies, i)
-        love.audio.play(explosionSound)
-        score = score + 10
+        table.remove(Enemies.enemies, i)
+        love.audio.play(Enemies.deathSound)
+        Player.score = Player.score + 10
       end
     end
 
-    if CheckCollision(enemy.x, enemy.y, enemy.img:getWidth(), enemy.img:getHeight(), player.x, player.y, player.img:getWidth(), player.img:getHeight()) and isAlive then
-      table.remove(enemies, i)
-      lives = lives - 1
-      if lives == 0 then
-          love.audio.play(explosionSound)
-          isAlive = false
+    if CheckCollision(enemy.x, enemy.y, enemy.img:getWidth(), enemy.img:getHeight(), Player.x, Player.y, Player.img:getWidth(), Player.img:getHeight()) and Player.isAlive then
+      table.remove(Enemies.enemies, i)
+      Player.health = Player.health - 10
+      love.audio.play(Enemies.deathSound)
+      if Player.health == 0 then
+          Player.isAlive = false
       end
     end
   end
 
 function love.draw()
     love.graphics.draw(background, 0, 0)
-    if isAlive then
-        love.graphics.print("Score: " .. score)
-        love.graphics.print("Lives remaining: " .. lives, love.graphics.getWidth() - 120, 0)
+    if Player.isAlive then
+        love.graphics.print("Score: " .. Player.score)
+        love.graphics.print("Health remaining: " .. Player.health, love.graphics.getWidth() - 120, 0)
 
-        love.graphics.draw(player.img, player.x, player.y)
+        --Debug
+        love.graphics.print("FPS: " .. love.timer.getFPS(), 0, 400)
+        love.graphics.print("Delta Time: " .. string.format("%4.3f", love.timer.getDelta()), 0 , 412)
+        love.graphics.print("Enemies: " .. #enemies, 0, 427)
+        love.graphics.print("Up: " ..  tostring(love.keyboard.isDown("w", "up")), 0, 442)
+        love.graphics.print("Down: " .. tostring(love.keyboard.isDown("s", "down")), 0, 457)
+        love.graphics.print("Left: " .. tostring(love.keyboard.isDown("a", "left")), 0, 472)
+        love.graphics.print("Right: " .. tostring(love.keyboard.isDown("d", "right")), 0, 487)
+
+        love.graphics.draw(Player.img, Player.x, Player.y)
 
         for i, bullet in ipairs(bullets) do
             love.graphics.draw(bullet.img, bullet.x, bullet.y)
         end
 
-        for i, enemy in ipairs(enemies) do
-            love.graphics.draw(enemy.img, enemy.x, enemy.y)
-        end
+        Enemies:Draw()
+
     else
         love.graphics.printf("You are dead. Press R to restart.", 170, (love.graphics.getHeight()/2), 500, "center")
     end
