@@ -36,7 +36,7 @@ end
 function Animation:PlayAnimation(img, x, y)
     love.graphics.draw(img, Animation[frame], x, y)
     if frame == 15 then
-      love.graphics.printf("You are dead. Press R to restart.", 170, (love.graphics.getHeight()/2), 500, "center")
+      love.graphics.printf("You are dead. Press R to restart.", 147, (love.graphics.getHeight()/2), 500, "center")
     end
 end
 
