@@ -2,8 +2,6 @@ local Animation = {}
 
 timer=0
 frame = 1
-frames = 15
-
 
 function Animation:CreateQuads(spriteWidth, spriteHeight, rows, columns, img)
   local index = 1
@@ -22,10 +20,10 @@ function Animation:CreateQuads(spriteWidth, spriteHeight, rows, columns, img)
   end
 end
 
-function Animation:Update(dt)
+function Animation:Update(dt, frames)
   timer = timer - dt
 
-  if timer < 0 and frame ~= 15 then
+  if timer < 0 and frame ~= frames then
     frame = (frame % frames) + 1
     timer = timer + 0.13
   end
@@ -35,8 +33,13 @@ end
 
 function Animation:PlayAnimation(img, x, y)
     love.graphics.draw(img, Animation[frame], x, y)
+<<<<<<< HEAD
     if frame == 15 then
       love.graphics.printf("You are dead. Press R to restart.", 147, (love.graphics.getHeight()/2), 500, "center")
+=======
+    if frame == frames then
+      love.graphics.printf("You are dead. Press R to restart.", 170, (love.graphics.getHeight()/2), 500, "center")
+>>>>>>> origin/master
     end
 end
 
