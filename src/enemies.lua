@@ -14,8 +14,10 @@ function Enemies:Create(dt)
     Enemies.createEnemyTimer = Enemies.createEnemyTimerMax
 
     local randomNumber = love.math.random(10, love.graphics.getWidth() - 10)
-    newEnemy = { x = randomNumber, y = -10, img = Enemies.img }
-    table.insert(Enemies.enemies, newEnemy)
+    if randomNumber > 0 and randomNumber < love.graphics.getWidth() - Player.img:getWidth() then
+      newEnemy = { x = randomNumber, y = -10, img = Enemies.img }
+      table.insert(Enemies.enemies, newEnemy)
+    end
   end
 end
 
@@ -36,8 +38,13 @@ function Enemies:Draw()
 end
 
 function Enemies:Die()
+  local x = i.x
+  local y = i.y
   table.remove(Bullets.bullets, j)
   table.remove(Enemies.enemies, i)
+
+  Animation:PlayAnimation(explosionSpritesheet, x, y)
+
   love.audio.play(Enemies.deathSound)
 end
 
