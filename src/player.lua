@@ -4,13 +4,14 @@ local Player = { score = 0, health = 0, x = 0,
            y = 0, speed = 0,  img = nil, shootSound = nil, deathSound = nil, isAlive = true, canShoot = true, canShootTimerMax = 0.2,
            canShootTimer = 0.2 }
 
- function Player:Initialise()
+ function Player.Initialise()
   Player.score = 0
   Player.health = 100
   Player.x = 100
   Player.y = 100
   Player.speed = 500
   Player.isAlive = true
+
   if Player.img == nil then
     Player.img = love.graphics.newImage('assets/ship.png')
   end
@@ -22,7 +23,7 @@ local Player = { score = 0, health = 0, x = 0,
   end
 end
 
-function Player:Move(direction, dt)
+function Player.Move(direction, dt)
   if direction == "up" then
     Player.y = Player.y - (Player.speed * dt)
   elseif direction == "down" then
@@ -34,7 +35,7 @@ function Player:Move(direction, dt)
   end
 end
 
-function Player:Fire(dt)
+function Player.Fire(dt)
   for i, bullet in ipairs(Bullets.bullets) do
     bullet.y = bullet.y - (250 * dt)
 
@@ -44,9 +45,13 @@ function Player:Fire(dt)
   end
 end
 
-function Player:Die()
+function Player.Die()
   love.audio.play(Player.deathSound)
   Player.isAlive = false
+end
+
+function Player.Draw()
+    love.graphics.draw(Player.img, Player.x, Player.y)
 end
 
 return Player

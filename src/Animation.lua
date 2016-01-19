@@ -1,7 +1,8 @@
 local Animation = {}
 
-timer=0
+timer = 0
 frame = 1
+frames = nil
 
 function Animation:CreateQuads(spriteWidth, spriteHeight, rows, columns, img)
   local index = 1
@@ -20,33 +21,26 @@ function Animation:CreateQuads(spriteWidth, spriteHeight, rows, columns, img)
   end
 end
 
-function Animation:Update(dt, frames)
+function Animation:Update(dt, totalFrames)
   timer = timer - dt
-
+  frames = totalFrames
   if timer < 0 and frame ~= frames then
     frame = (frame % frames) + 1
     timer = timer + 0.13
   end
-
-
 end
 
-function Animation:PlayAnimation(img, x, y)
+function Animation:PlayAnimation(img, x, y, font)
     love.graphics.draw(img, Animation[frame], x, y)
-<<<<<<< HEAD
-    if frame == 15 then
-      love.graphics.printf("You are dead. Press R to restart.", 147, (love.graphics.getHeight()/2), 500, "center")
-=======
     if frame == frames then
-      love.graphics.printf("You are dead. Press R to restart.", 170, (love.graphics.getHeight()/2), 500, "center")
->>>>>>> origin/master
+        love.graphics.setFont(font)
+        love.graphics.printf("You are dead. Press R to restart.", 170, (love.graphics.getHeight()/2), 500, "center")
     end
 end
 
 function Animation.Reset()
   timer = 0
   frame = 1
-  frames = 15
 end
 
 return Animation
